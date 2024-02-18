@@ -5,6 +5,7 @@ package lucaguerra.progettoimporExportCsv.config;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import lucaguerra.progettoimporExportCsv.job.PlayerItemProcessor;
+import lucaguerra.progettoimporExportCsv.job.PlayerWriter;
 import lucaguerra.progettoimporExportCsv.models.Player;
 import lucaguerra.progettoimporExportCsv.repository.PlayerRepository;
 import org.springframework.batch.core.Job;
@@ -14,7 +15,7 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
-import org.springframework.batch.item.data.RepositoryItemWriter;
+import org.springframework.batch.item.ItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
@@ -38,20 +39,7 @@ public class SpringBatchConfig {
 
 
 
-    // IMPOSTAZIONE READER, (LETTURA FILE CSV)
-    // ANDIAMO A MAPPARE LA CLASSE (Player in questo caso) PER LEGGERE I DATI DAL FILE.CSV
-    // CONFIGURIAMO IL READER
-    @Bean
-    @StepScope
-    public FlatFileItemReader<Player> reader() {
-        FlatFileItemReader<Player> itemReader = new FlatFileItemReader<>();
-        itemReader.setResource(new FileSystemResource("src/main/resources/csv/player.csv"));
-        itemReader.setName("csvReader");
-        itemReader.setLinesToSkip(1);
-        // SERVE A INDICARE COME DEVE MAPPARE I FILE.CSV CON LA CLASSE MAPPER
-        itemReader.setLineMapper(lineMapper());
-        return itemReader;
-    }
+
 
 
     // QUESTO METODO CONFIGURA LA MAPPATURA DELLA CLASSE
@@ -81,37 +69,51 @@ public class SpringBatchConfig {
         return lineMapper;
     }
 
-    // CREIAMO UN BEAN PER ANDARE AD ISTANZIARE LA CLASSE PlayerItemProcessor
 
+    // IMPOSTAZIONE READER, (LETTURA FILE CSV)
+    // ANDIAMO A MAPPARE LA CLASSE (Player in questo caso) PER LEGGERE I DATI DAL FILE.CSV
+    // CONFIGURIAMO IL READER
+    @Bean
+    @StepScope
+    public FlatFileItemReader<Player> reader() {
+        FlatFileItemReader<Player> itemReader = new FlatFileItemReader<>();
+        itemReader.setResource(new FileSystemResource("src/main/resources/csv/player.csv"));
+        itemReader.setName("csvReader");
+        itemReader.setLinesToSkip(1);
+        // SERVE A INDICARE COME DEVE MAPPARE I FILE.CSV CON LA CLASSE MAPPER
+        itemReader.setLineMapper(lineMapper());
+        return itemReader;
+    }
+
+
+    // CREIAMO UN BEAN PER ANDARE AD ISTANZIARE LA CLASSE PlayerItemProcessor
+    // USIAMO CompositeItemProcessor PER UNIRE PIU PROCESSI (AGGIUNGERE PROCESS IN LIST.OF)
     @StepScope
     @Bean
     public ItemProcessor<Player, Player> processor() {
         CompositeItemProcessor<Player, Player> processor = new CompositeItemProcessor<>();
-        processor.setDelegates(List.of(new PlayerItemProcessor(), new PlayerItemProcessor()));
+        processor.setDelegates(List.of(new PlayerItemProcessor()));
         return processor;
     }
 
-    // PARTE DEDICATA AL WRITER
 
-    // QUESTA CLASSE PERMETTE DI ANDARE A RECUPERARE IL REPOSITORY DELLA CLASSE (Player in questo caso)
+    // RICHIAMIAMO NUOVO OGGETTO WRITER
     @Bean
     @StepScope
-    public RepositoryItemWriter<Player> writer() {
-        RepositoryItemWriter<Player> writer = new RepositoryItemWriter<>();
-        writer.setRepository(playerRepository);
-        writer.setMethodName("save");
-        return writer;
+    public ItemWriter<Player> writer() {
+        return new PlayerWriter();
     }
 
+    // IMPOSTIAMO IL JOB
     @Bean
     public Job runJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         log.info("avvio del job");
         return new JobBuilder("importPlayers", jobRepository)
-
                 .start(step1(jobRepository, transactionManager))
                 .build();
     }
 
+    // IMPOSTIAMO STEP DI LAVORO
     @Bean
     public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("step1", jobRepository).<Player, Player>
