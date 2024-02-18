@@ -38,10 +38,6 @@ public class SpringBatchConfig {
     private PlayerRepository playerRepository;
 
 
-
-
-
-
     // QUESTO METODO CONFIGURA LA MAPPATURA DELLA CLASSE
     // POSSIAMO USARE QUESTA CONFIGURAZIONE SE CONOSCIAMO GLI ATTRIBUTI DEL FILE.CSV E DOBBIAMO LEGGERLI TUTTI
     // SE VOGLIAMO LEGGERE SOLO ALCUNI ATTRIBUTI DEL FILE.CSV ABBIAMO BISOGNO DI CREARE UNA CONFIGURAZIONE PESONALIZZATA
@@ -107,16 +103,16 @@ public class SpringBatchConfig {
     // IMPOSTIAMO IL JOB
     @Bean
     public Job runJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        log.info("avvio del job");
+        log.info("AVVIO JOB---------------");
         return new JobBuilder("importPlayers", jobRepository)
-                .start(step1(jobRepository, transactionManager))
+                .start(stepPlayer(jobRepository, transactionManager))
                 .build();
     }
 
     // IMPOSTIAMO STEP DI LAVORO
     @Bean
-    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("step1", jobRepository).<Player, Player>
+    public Step stepPlayer(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("stepPlayer", jobRepository).<Player, Player>
                         chunk(10, transactionManager)
                 .reader(reader())
                 .processor(processor())
