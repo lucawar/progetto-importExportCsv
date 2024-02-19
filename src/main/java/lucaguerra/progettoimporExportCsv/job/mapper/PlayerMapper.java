@@ -13,29 +13,28 @@ import org.springframework.stereotype.Component;
 @Data
 public class PlayerMapper {
 
-    // QUESTO METODO CONFIGURA LA MAPPATURA DELLA CLASSE Player
+    // QUESTA CLASSE CONTIENE UN METODO PER CONFIGURARE LA MAPPATURA DELLA CLASSE Player
     // POSSIAMO USARE QUESTA CONFIGURAZIONE SE CONOSCIAMO GLI ATTRIBUTI DEL FILE.CSV E DOBBIAMO LEGGERLI TUTTI
     // SE VOGLIAMO LEGGERE SOLO ALCUNI ATTRIBUTI DEL FILE.CSV ABBIAMO BISOGNO DI CREARE UNA CONFIGURAZIONE PESONALIZZATA
     // CREANDO UNA CLASSE CHE IMPLEMENTENTA FieldSetMapper
     public LineMapper<Player> playerlineMapper() {
-        // SPECIFICA IL TIPO DELLA CLASSE
+        // Specifica il tipo di classe
         DefaultLineMapper<Player> lineMapper = new DefaultLineMapper<>();
 
         DelimitedLineTokenizer lineTokenizer = new DelimitedLineTokenizer();
 
-        // SPEZZETTA IN FIELD (valori) QUANDO TROVA "," (CONFIGURIAMO IN BASE AI CARATTERI SPECIALI PRESENTI NEL FILE.CSV)
+        // Spezzata in field (valori) quando trova "," (Configuriamo a seconda dei caratteri speciali presenti nel file.csv)
         lineTokenizer.setDelimiter(",");
-        // DI BASE SE Player NON VIENE TROVATA VIENE LANCIATA UN ECCEZIONE
-        // SE LO IMPOSTIAMO A false QUANDO Player NON VIENE TROVATA NON VIENE SOLLEVATA UN ECCEZIONE
+        // Di default se la classe Player non viene trovata vine lanciate un eccezione, impostiamo a false per evitare ciò
         lineTokenizer.setStrict(false);
-        // IMPOSTAZIONE NAME OVVERO GLI ATTRIBUTI DELLA CLASSE, DEVONO ESSERE UGUALI AGLI ATTRIBUTI DELLA CLASSE (Player in questo caso)
+        // Impostiamo gli attributi della classe (In questo caso li conosciamo e li dovremo impostare cosi)
         lineTokenizer.setNames("id", "firstName", "lastName", "position", "team");
 
         BeanWrapperFieldSetMapper<Player> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
-        // IMPOSTA IL TARGET DELLA CLASSE DA MAPPARE
+        // Imposta il target da mappare (Player), da qui prendera tutte le info sulla classe Player
         fieldSetMapper.setTargetType(Player.class);
         lineMapper.setLineTokenizer(lineTokenizer);
-        // I FIELD (valori) DEVONO ESSERE MAPPATI SUI FIELD DI Player, E LA CORRISPONDENZA DEI FIELD SEGUE L'ORDINE DI setNames;
+        // I field devono essere mappati sui filed di Player, e la corrispondenza dei field segue l'ordine di SetNames
         lineMapper.setFieldSetMapper(fieldSetMapper);
         return lineMapper;
     }
