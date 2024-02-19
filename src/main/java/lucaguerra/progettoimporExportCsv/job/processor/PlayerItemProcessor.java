@@ -1,4 +1,4 @@
-package lucaguerra.progettoimporExportCsv.job;
+package lucaguerra.progettoimporExportCsv.job.processor;
 
 import lucaguerra.progettoimporExportCsv.models.Player;
 import org.springframework.batch.item.ItemProcessor;

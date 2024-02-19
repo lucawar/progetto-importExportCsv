@@ -1,4 +1,4 @@
-package lucaguerra.progettoimporExportCsv.job;
+package lucaguerra.progettoimporExportCsv.job.writer;
 
 import lombok.extern.slf4j.Slf4j;
 import lucaguerra.progettoimporExportCsv.models.Player;
