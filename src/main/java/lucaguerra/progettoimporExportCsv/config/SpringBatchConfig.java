@@ -12,6 +12,7 @@ import lucaguerra.progettoimporExportCsv.job.writer.BookWriter;
 import lucaguerra.progettoimporExportCsv.job.writer.PlayerWriter;
 import lucaguerra.progettoimporExportCsv.models.Book;
 import lucaguerra.progettoimporExportCsv.models.Player;
+import lucaguerra.progettoimporExportCsv.repository.BookRepository;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.StepScope;
@@ -25,6 +26,7 @@ import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.support.CompositeItemProcessor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
@@ -41,16 +43,34 @@ public class SpringBatchConfig {
 
     private final PlayerMapper playerMapper;
 
+    @Autowired
+    private BookRepository bookRepository;
 
-    // IMPOSTAZIONE IL JOB
+
+    // IMPOSTAZIONE JOB
     @Bean
     public Job runJob(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         log.info("AVVIO JOB---------------");
-        return new JobBuilder("importPlayers", jobRepository)
-                .incrementer(new RunIdIncrementer())
-                .start(stepPlayer(jobRepository, transactionManager))
-                .next(stepBook(jobRepository, transactionManager))
-                .build();
+        if (!areBooksImported()) {
+            return new JobBuilder("importEntity", jobRepository)
+                    .incrementer(new RunIdIncrementer())
+                    .start(stepPlayer(jobRepository, transactionManager))
+                    .next(stepBook(jobRepository, transactionManager))
+                    .build();
+        } else {
+            log.info("I libri sono già stati importati, non è necessario eseguire nuovamente il job.");
+            return null;
+        }
+    }
+
+    // Metodo per verificare lo stato di importazione dei libri
+    private boolean areBooksImported() {
+        // Logica per verificare se i libri sono già stati importati,
+        // verifica il numero di libri nel database utilizzando il repository BookRepository
+        long numberOfBooks = bookRepository.count();
+        // Se il numero di libri nel database è maggiore di zero, i libri sono stati importati
+        // Restituisci true in questo caso, altrimenti restituisci false
+        return numberOfBooks > 0;
     }
 
     // STEP--------------------------------------------------------------------------------
